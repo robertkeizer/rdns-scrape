@@ -1,0 +1,19 @@
+#!./node_modules/coffee-script/bin/coffee
+log		= require( "logging" ).from __filename
+config		= require "config"
+async		= require "async"
+cli		= require "cli"
+
+cli.parse { debug: [ "d", "Enable debug" ], range: [ "r", "IP range specification." ] }
+
+cli.main ( args, opts ) ->
+	if not opts.range or opts.range is ""
+		@error "Range must be specified."
+		return @error "Try -h."
+	
+	if opts.debug
+		@debug "Enabling logging"
+		@debug "Using #{config.servers.length} servers ( #{config.servers} )"
+	
+	# Parse the range that has been specified..
+	@ok "Hi there"
