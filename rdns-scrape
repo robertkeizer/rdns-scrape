@@ -22,34 +22,41 @@ pick_dns_server = ( ) ->
 
 	config.servers[t_index]
 
-cli.withStdinLines ( lines, newline ) ->
-	for line in lines
+perform_query = ( ip, cb ) ->
+	log "Starting query for ip #{ip}"
+	answers = [ ]
 
-		# Confirm only v4 addresses input..
-		if not net.isIPv4 line
-			continue
+	# Get the actual record we're going to be querying..
+	_reverse = ""
+	for b in ip.split( "." ).reverse()
+		_reverse += b + "."
+	_reverse += "in-addr.arpa"
 
-		# Get the actual record we're going to be querying..
-		_reverse = ""
-		for b in line.split( "." ).reverse()
-			_reverse += b + "."
-		_reverse += "in-addr.arpa"
+	question = dns.Question { "name": _reverse, "type": "PTR" }
 
-		question = dns.Question { "name": _reverse, "type": "PTR" }
+	req = dns.Request { "question": question, "server": pick_dns_server( ) }
 
-		req = dns.Request { "question": question, "server": pick_dns_server( ) }
+	req.on "timeout", ( ) ->
+		return cb "timeout"
 
-		req.on "timeout", ( ) ->
-			log "timeout!"
+	req.on "message", ( err, answer ) ->
+		if err
+			return cb err
 
-		req.on "message", ( err, answer ) ->
-			if err
-				log "Got error: #{error}"
-				return
-			answer.answer.forEach ( a ) ->
-				log a.data
+		answers = [ a.data for a in answer.answer ]
 
-		req.on "end", ( ) ->
-			log "done"
+	req.on "end", ( ) ->
+		return cb null, answers
 
-		req.send()
+	req.send()
+
+cli.withInput ( line, newline, eof ) ->
+	if not eof
+		if line isnt "" and net.isIPv4 line
+			perform_query line, ( err, res ) ->
+				if err
+					log "Couldn't query #{line}: #{err}"
+					return
+				log res
+	else
+		log "done!"
