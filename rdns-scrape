@@ -3,17 +3,53 @@ log		= require( "logging" ).from __filename
 config		= require "config"
 async		= require "async"
 cli		= require "cli"
+net		= require "net"
+dns		= require "native-dns"
 
-cli.parse { debug: [ "d", "Enable debug" ], range: [ "r", "IP range specification." ] }
+log "Using #{config.servers.length} servers ( #{s.address for s in config.servers} );"
 
-cli.main ( args, opts ) ->
-	if not opts.range or opts.range is ""
-		@error "Range must be specified."
-		return @error "Try -h."
-	
-	if opts.debug
-		@debug "Enabling logging"
-		@debug "Using #{config.servers.length} servers ( #{config.servers} )"
-	
-	# Parse the range that has been specified..
-	@ok "Hi there"
+current_server_index = 0
+pick_dns_server = ( ) ->
+
+	t_index = current_server_index
+
+	# Change the current_server_index appropriately to loop through the
+	# servers, round robin style. 
+	if current_server_index is config.servers.length-1
+		current_server_index = 0
+	else
+		current_server_index += 1
+
+	config.servers[t_index]
+
+cli.withStdinLines ( lines, newline ) ->
+	for line in lines
+
+		# Confirm only v4 addresses input..
+		if not net.isIPv4 line
+			continue
+
+		# Get the actual record we're going to be querying..
+		_reverse = ""
+		for b in line.split( "." ).reverse()
+			_reverse += b + "."
+		_reverse += "in-addr.arpa"
+
+		question = dns.Question { "name": _reverse, "type": "PTR" }
+
+		req = dns.Request { "question": question, "server": pick_dns_server( ) }
+
+		req.on "timeout", ( ) ->
+			log "timeout!"
+
+		req.on "message", ( err, answer ) ->
+			if err
+				log "Got error: #{error}"
+				return
+			answer.answer.forEach ( a ) ->
+				log a.data
+
+		req.on "end", ( ) ->
+			log "done"
+
+		req.send()

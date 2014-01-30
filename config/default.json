@@ -1,3 +1,6 @@
 {
-	"servers": [ "8.8.8.8", "8.8.4.4" ]
+	"servers": [
+			{ "address": "8.8.8.8", "port": 53, "type": "udp" },
+			{ "address": "8.8.4.4", "port": 53, "type": "udp" }
+		]
 }

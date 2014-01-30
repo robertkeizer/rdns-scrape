@@ -1,0 +1,17 @@
+{
+	"name": "rdns-scrape",
+	"description": "Remote DNS Scraping",
+	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "http://github.com/robertkeizer/rdns-scrape.git"
+	},
+	"dependencies": {
+		"coffee-script": "1.6.3",
+		"logging": "2.0.21",
+		"config": "0.4.34",
+		"async": "0.2.9",
+		"native-dns": "0.4.1",
+		"cli": "0.4.5"
+	}
+}
