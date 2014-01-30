@@ -20,7 +20,7 @@ pick_dns_server = ( ) ->
 	else
 		current_server_index += 1
 
-	log "using #{config.servers[t_index].address}"
+	log "Using DNS server #{config.servers[t_index].address}"
 	config.servers[t_index]
 
 perform_query = ( ip, cb ) ->
@@ -60,7 +60,7 @@ queue = async.queue ( ip, cb ) ->
 , 10
 
 queue.drain = ( ) ->
-	log "Completely done the queue."
+	log "The queue is now empty."
 
 cli.withInput ( line, newline, eof ) ->
 	if not eof
@@ -70,4 +70,4 @@ cli.withInput ( line, newline, eof ) ->
 					log "Couldn't query #{line}: #{err}"
 				log "done for #{line}."
 	else
-		log "done!"
+		log "Finished reading input."
