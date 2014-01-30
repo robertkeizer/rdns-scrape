@@ -20,6 +20,7 @@ pick_dns_server = ( ) ->
 	else
 		current_server_index += 1
 
+	log "using #{config.servers[t_index].address}"
 	config.servers[t_index]
 
 perform_query = ( ip, cb ) ->
@@ -50,13 +51,23 @@ perform_query = ( ip, cb ) ->
 
 	req.send()
 
+queue = async.queue ( ip, cb ) ->
+	perform_query ip, ( err, res ) ->
+		if err
+			return cb err
+		log res
+		cb null
+, 10
+
+queue.drain = ( ) ->
+	log "Completely done the queue."
+
 cli.withInput ( line, newline, eof ) ->
 	if not eof
 		if line isnt "" and net.isIPv4 line
-			perform_query line, ( err, res ) ->
+			queue.push line, ( err ) ->
 				if err
 					log "Couldn't query #{line}: #{err}"
-					return
-				log res
+				log "done for #{line}."
 	else
 		log "done!"
